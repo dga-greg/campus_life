@@ -1,11 +1,21 @@
-import { expect, test } from "@playwright/test";
+import { setupClerkTestingToken } from "@clerk/testing/playwright";
+import { expect, test, type Page } from "@playwright/test";
 
 const shots = process.env.SHOTS_DIR;
+const PASSWORD = "Akwaaba-campus-2026!";
 
-test("a new player registers, creates a student, accepts admission and resumes later", async ({ page, context }, info) => {
+// Clerk development instances accept "+clerk_test" addresses and the fixed code 424242.
+async function verifyIfAsked(page: Page) {
+  const code = page.getByRole("textbox", { name: /code|digit/i }).first();
+  await Promise.race([code.waitFor({ timeout: 15_000 }).catch(() => {}), page.waitForURL(/\/(create|dashboard)$/, { timeout: 15_000 }).catch(() => {})]);
+  if (await code.isVisible().catch(() => false)) await code.pressSequentially("424242");
+}
+
+test("a new player registers, creates a student, accepts admission and resumes later", async ({ page }, info) => {
   const snap = async (name: string) => { if (shots) await page.screenshot({ path: `${shots}/${info.project.name}-${name}.png`, fullPage: true }); };
   const noSideScroll = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  const email = `player-${Date.now()}-${info.project.name}@example.test`;
+  const email = `player-${Date.now()}-${info.project.name.replace(/\W/g, "")}+clerk_test@example.com`;
+  await setupClerkTestingToken({ page });
 
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login$/); // protected route
@@ -15,10 +25,11 @@ test("a new player registers, creates a student, accepts admission and resumes l
   await noSideScroll(); await snap("1-landing");
   await page.getByRole("link", { name: "Start first year" }).click();
 
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("short");
-  await page.getByLabel("Password").fill("a long enough password");
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+  await snap("1b-register");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await verifyIfAsked(page);
   await expect(page).toHaveURL(/\/create$/);
 
   // Step 1: look
@@ -63,13 +74,11 @@ test("a new player registers, creates a student, accepts admission and resumes l
   await page.getByRole("button", { name: "Log out" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/dashboard"); await expect(page).toHaveURL(/\/login$/);
-  await context.clearCookies();
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("wrong password here");
-  await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page.locator("#main").getByRole("alert")).toContainText("incorrect");
-  await page.getByLabel("Password").fill("a long enough password");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.getByLabel("Email address").fill(email);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await verifyIfAsked(page);
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Ama Owusu" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Wallet" })).toContainText("GH₵550.00");

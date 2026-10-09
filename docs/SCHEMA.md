@@ -2,12 +2,11 @@
 
 Conventions: UUID primary keys for player data; readable string ids for authored content (`computer-science`, `csc-111`) so content files and rows line up. Money is integer pesewas. Every player-owned table reaches `User` through `Character`, and every query in the service layer filters on `userId`.
 
-## Implemented (migration `init`)
+## Implemented (migrations `init`, `managed_auth`)
 
 | Model | Purpose | Key constraints |
 |---|---|---|
-| User | Account | `email` unique |
-| Session | Login session | `tokenHash` unique (SHA-256 of cookie); cascade on user delete |
+| User | Local handle for a Clerk account | `authId` unique; no email or credentials stored |
 | University, AcademicProgram, Course | Reference content, seeded from `src/engine/content` | `Course.code` unique |
 | ProgramCourse | Curriculum: programme × course × year × semester | composite PK |
 | CoursePrerequisite | Course → prerequisite | composite PK (rows arrive with Year 1 Sem 2 content) |
@@ -21,7 +20,6 @@ Conventions: UUID primary keys for player data; readable string ids for authored
 | GameActionLog | Append-only audit and idempotency | unique `(characterId, idempotencyKey)` |
 
 ```
-User 1─* Session
 User 1─* Character 1─1 CharacterAppearance
                    1─1 GameSave
                    1─1 PlayerStatistics

@@ -8,10 +8,10 @@ A university life simulator set at the fictional Akwaaba Metropolitan University
 
 ## Run locally
 
-Requires Node 22 and PostgreSQL 16.
+Requires Node 22, PostgreSQL 16 and Clerk keys (free: https://dashboard.clerk.com, or `npx clerk@latest init --accountless` for temporary dev keys).
 
 ```bash
-cp .env.example .env          # set DATABASE_URL
+cp .env.example .env          # set DATABASE_URL and Clerk keys
 npm install
 npm run db:migrate
 npm run db:seed
@@ -22,7 +22,7 @@ npm run dev                   # http://localhost:3000
 
 ```bash
 npm run check                 # lint + typecheck + unit and integration tests
-npm run test:e2e              # Playwright; builds and starts the app itself
+npm run test:e2e              # Playwright; builds and starts the app itself; needs Clerk *development* keys
 ```
 
 Integration tests read `DATABASE_URL` from `.env.test`, refuse to run unless the database name contains `campus_test`, and delete all users between tests.

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { logoutAction } from "@/app/actions";
+import { SignOutButton } from "@clerk/nextjs";
 import { Avatar } from "@/components/Avatar";
 import { AMBITIONS, BACKGROUNDS, COURSES, STAT_KEYS, STAT_LABELS, formatCedis, formatGpa, getProgram } from "@/engine";
 import { requireUserId } from "@/server/auth/session";
@@ -87,7 +87,7 @@ export default async function Page() {
         </div>
       </div>
 
-      <form action={logoutAction} className="mt-8"><button className="btn-ghost w-full sm:w-auto">Log out</button></form>
+      <div className="mt-8"><SignOutButton redirectUrl="/"><button className="btn-ghost w-full sm:w-auto">Log out</button></SignOutButton></div>
     </main>
   );
 }

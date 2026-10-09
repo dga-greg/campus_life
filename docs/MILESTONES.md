@@ -5,18 +5,18 @@ Legend: [x] built and verified · [~] partly done · [ ] not started
 ## Phase 1 — Foundation
 - [x] Project structure (Next.js 16, TypeScript, Tailwind 4, Prisma 7, Vitest, Playwright, CI workflow)
 - [x] Database schema, migration, seed (Phase 1 models; later models specified in SCHEMA.md)
-- [x] Authentication: register, log in, log out, hashed sessions, rate limiting
+- [x] Authentication: Clerk (register, log in, log out, Google sign-in); local user mapping
 - [x] Design system: colour and type tokens, buttons, cards, fields, focus and reduced-motion handling
 - [x] Landing page
 - [x] Character creator: appearance, name, hometown, ambition, traits, programme, background
 - [x] Admission letter and first server-authoritative action (accept admission, pay fees)
 - [x] Main dashboard: stats, wallet, ledger, courses, clock
 - [x] Initial game state from the engine
-- [~] Managed authentication — own implementation in place; provider not chosen
-- [~] CI — workflow written, not yet run on GitHub (no remote)
+- [~] Clerk is on temporary, unclaimed development keys — needs claiming and real keys before deployment
+- [~] CI — workflow written, not yet run on GitHub (push not possible yet; needs Clerk keys as repo secrets)
 - [ ] Deployment to a host
 
-Verified by: 30 unit/integration tests, 2 end-to-end runs (360 px, 1280 px), lint, typecheck, production build.
+Verified by: 28 unit/integration tests, 2 end-to-end runs (360 px, 1280 px), lint, typecheck, production build.
 
 ## Phase 2 — Playable first semester
 - [ ] Weekly planner and action slots
@@ -40,7 +40,7 @@ Verified by: 30 unit/integration tests, 2 end-to-end runs (360 px, 1280 px), lin
 - [ ] Share cards · friend challenges · opt-in leaderboards · weekly scenarios · achievements
 
 ## Phase 7 — Production readiness
-- [ ] Security review · accessibility audit · performance · Redis rate limiting · analytics · error monitoring · account deletion and export · deployment docs
+- [ ] Clerk account-deleted webhook · security review · accessibility audit · performance · Redis rate limiting · analytics · error monitoring · account deletion and export · deployment docs
 
 ## Acceptance criteria (brief §21)
 | # | Criterion | Status |

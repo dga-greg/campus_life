@@ -1,32 +1,18 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { endSession, userIdForToken } from "./accounts";
+import { connection } from "next/server";
+import { localUserIdFor } from "./users";
 
-const COOKIE = "cla_session";
-
-export async function setSessionCookie(token: string, expiresAt: Date) {
-  (await cookies()).set(COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    expires: expiresAt,
-  });
-}
-
+/** The signed-in player's local user id, verified by Clerk on every request. */
 export async function currentUserId(): Promise<string | null> {
-  return userIdForToken((await cookies()).get(COOKIE)?.value);
+  await connection(); // sessions are per request; never prerender past this point
+  const { userId } = await auth();
+  return userId ? localUserIdFor(userId) : null;
 }
 
 export async function requireUserId(): Promise<string> {
   const id = await currentUserId();
   if (!id) redirect("/login");
   return id;
-}
-
-export async function clearSession() {
-  const store = await cookies();
-  await endSession(store.get(COOKIE)?.value);
-  store.delete(COOKIE);
 }

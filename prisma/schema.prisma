@@ -13,27 +13,12 @@ datasource db {
 
 model User {
   id           String   @id @default(uuid()) @db.Uuid
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  sessions   Session[]
-  characters Character[]
-}
-
-model Session {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid
-  /// SHA-256 of the cookie token. The raw token is never stored.
-  tokenHash String   @unique
-  expiresAt DateTime
+  /// The auth provider's user id. The only thing we store about the account.
+  authId    String   @unique
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
+  characters Character[]
 }
 
 model University {

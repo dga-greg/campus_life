@@ -12,6 +12,11 @@ jobs:
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgresql://postgres@127.0.0.1:5432/campus_test
+      # Clerk development-instance keys, set as repository secrets.
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /login
+      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /register
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import { APPEARANCE, cedis, type CharacterInput } from "@/engine";
-import { endSession, login, register, userIdForToken } from "@/server/auth/accounts";
+import { localUserIdFor } from "@/server/auth/users";
 import { rateLimit, resetRateLimits } from "@/server/auth/rate-limit";
 import { db } from "@/server/db";
 import { createCharacter, loadGame, performAction, recentTransactions } from "@/server/game/service";
@@ -12,12 +12,7 @@ const input: CharacterInput = {
   ambitionId: "own-business", traits: ["Ambitious", "Witty"],
   appearance: { skinTone: APPEARANCE.skinTone[2], hairstyle: "fade", hairColor: APPEARANCE.hairColor[0], outfit: "smock", outfitColor: APPEARANCE.outfitColor[0], accessory: "glasses" },
 };
-const password = "correct horse battery";
-const newUser = async () => {
-  const r = await register({ email: `${randomUUID()}@example.test`, password });
-  if (!r.ok) throw new Error(r.message);
-  return r;
-};
+const newUser = async () => ({ userId: await localUserIdFor(`user_${randomUUID()}`) });
 const accept = (characterId: string, expectedVersion: number, idempotencyKey: string = randomUUID()) => ({
   characterId, expectedVersion, idempotencyKey, action: { type: "ACCEPT_ADMISSION" },
 });
@@ -29,35 +24,15 @@ beforeAll(async () => {
 beforeEach(async () => { await db.user.deleteMany(); resetRateLimits(); });
 afterAll(() => db.$disconnect());
 
-describe("accounts", () => {
-  it("registers, stores only hashes, and resolves the session token", async () => {
-    const r = await newUser();
-    const user = await db.user.findUniqueOrThrow({ where: { id: r.userId } });
-    expect(user.passwordHash).not.toContain(password);
-    const session = await db.session.findFirstOrThrow({ where: { userId: r.userId } });
-    expect(session.tokenHash).not.toBe(r.token);
-    expect(await userIdForToken(r.token)).toBe(r.userId);
-    expect(await userIdForToken("forged")).toBeNull();
-    expect(await userIdForToken(undefined)).toBeNull();
-  });
-  it("rejects duplicates, weak passwords and wrong credentials without saying which part was wrong", async () => {
-    const email = "ama@example.test";
-    expect((await register({ email, password })).ok).toBe(true);
-    expect((await register({ email: "AMA@example.test ", password })).ok).toBe(false);
-    expect((await register({ email: "b@example.test", password: "short" })).ok).toBe(false);
-    const wrongPw = await login({ email, password: "wrong password!" });
-    const noUser = await login({ email: "nobody@example.test", password });
-    expect(wrongPw).toEqual(noUser);
-    expect((await login({ email, password })).ok).toBe(true);
-  });
-  it("logout and expiry invalidate the session", async () => {
-    const r = await newUser();
-    await endSession(r.token);
-    expect(await userIdForToken(r.token)).toBeNull();
-    const again = await login({ email: (await db.user.findUniqueOrThrow({ where: { id: r.userId } })).email, password });
-    if (!again.ok) throw new Error();
-    await db.session.updateMany({ where: { userId: r.userId }, data: { expiresAt: new Date(Date.now() - 1000) } });
-    expect(await userIdForToken(again.token)).toBeNull();
+describe("users", () => {
+  it("maps a provider id to one stable local user, even when first requests race", async () => {
+    const ids = await Promise.allSettled(Array.from({ length: 4 }, () => localUserIdFor("user_abc")));
+    const ok = ids.filter((r) => r.status === "fulfilled").map((r) => (r as PromiseFulfilledResult<string>).value);
+    expect(ok.length).toBeGreaterThan(0);
+    expect(new Set([...ok, await localUserIdFor("user_abc")]).size).toBe(1);
+    expect(await db.user.count()).toBe(1);
+    expect(await localUserIdFor("user_other")).not.toBe(ok[0]);
+    await expect(localUserIdFor("")).rejects.toThrow();
   });
   it("rate limiter blocks after the limit and recovers after the window", () => {
     for (let i = 0; i < 5; i++) expect(rateLimit("k", 5, 1000, 0).allowed).toBe(true);
