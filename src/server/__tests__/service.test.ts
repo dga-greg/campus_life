@@ -26,9 +26,7 @@ afterAll(() => db.$disconnect());
 
 describe("users", () => {
   it("maps a provider id to one stable local user, even when first requests race", async () => {
-    const ids = await Promise.allSettled(Array.from({ length: 4 }, () => localUserIdFor("user_abc")));
-    const ok = ids.filter((r) => r.status === "fulfilled").map((r) => (r as PromiseFulfilledResult<string>).value);
-    expect(ok.length).toBeGreaterThan(0);
+    const ok = await Promise.all(Array.from({ length: 8 }, () => localUserIdFor("user_abc")));
     expect(new Set([...ok, await localUserIdFor("user_abc")]).size).toBe(1);
     expect(await db.user.count()).toBe(1);
     expect(await localUserIdFor("user_other")).not.toBe(ok[0]);
