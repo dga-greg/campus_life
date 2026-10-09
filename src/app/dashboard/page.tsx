@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import Loading from "@/app/loading";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@clerk/nextjs";
 import { Avatar } from "@/components/Avatar";
@@ -7,7 +9,16 @@ import { loadGame, recentTransactions } from "@/server/game/service";
 
 export const metadata = { title: "Dashboard" };
 
-export default async function Page() {
+// The session is only known per request, so the page streams in behind a fallback.
+export default function Page() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Content />
+    </Suspense>
+  );
+}
+
+async function Content() {
   const userId = await requireUserId();
   const game = await loadGame(userId);
   if (!game) redirect("/create");

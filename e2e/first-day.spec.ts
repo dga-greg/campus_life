@@ -36,19 +36,19 @@ test("a new player registers, creates a student, accepts admission and resumes l
   await page.getByText("Braids", { exact: true }).click();
   await page.getByText("Glasses", { exact: true }).click();
   await noSideScroll(); await snap("2-look");
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
 
   // Step 2: identity — validation blocks an empty name
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: /characters|trait/i })).toBeVisible();
   await page.getByLabel("Display name").fill("Ama Owusu");
   await page.getByLabel("Hometown").selectOption("Kumasi");
   await page.getByText("Curious", { exact: true }).click();
   await snap("3-identity");
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
 
   await page.getByText("Computer Science", { exact: true }).click();
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await page.getByText("Scholarship Student", { exact: true }).click();
   await noSideScroll(); await snap("4-background");
   await page.getByRole("button", { name: "Apply to AMU" }).click();

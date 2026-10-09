@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import Loading from "@/app/loading";
 import { redirect } from "next/navigation";
 import { AcceptAdmission } from "@/components/AcceptAdmission";
 import { BACKGROUNDS, COURSES, formatCedis, getProgram } from "@/engine";
@@ -6,7 +8,16 @@ import { loadGame } from "@/server/game/service";
 
 export const metadata = { title: "Admission letter" };
 
-export default async function Page() {
+// The session is only known per request, so the page streams in behind a fallback.
+export default function Page() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Content />
+    </Suspense>
+  );
+}
+
+async function Content() {
   const game = await loadGame(await requireUserId());
   if (!game) redirect("/create");
   if (game.state.clock.phase !== "admission") redirect("/dashboard");
