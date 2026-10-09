@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-sand: #fbf4e6;
+  --color-sand-deep: #f1e4cb;
+  --color-ink: #2b1c12;
+  --color-ink-soft: #644c3c;
+  --color-clay: #b8452f;
+  --color-clay-deep: #96351f;
+  --color-forest: #17695d;
+  --color-gold: #e0a526;
+  --color-night: #23314f;
+  --color-card: #fffdf8;
+  --color-line: #e3d3b6;
+  --font-sans: ui-rounded, "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Georgia", "Iowan Old Style", "Times New Roman", serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html { background: var(--color-sand); color: var(--color-ink); }
+body { font-family: var(--font-sans); }
+
+:focus-visible { outline: 3px solid var(--color-night); outline-offset: 2px; border-radius: 6px; }
+
+@utility btn { @apply inline-flex min-h-12 items-center justify-center rounded-2xl px-5 py-3 text-base font-bold transition-transform duration-150 active:scale-[0.98] disabled:opacity-60; }
+@utility btn-primary { @apply btn bg-clay text-white hover:bg-clay-deep; }
+@utility btn-ghost { @apply btn border-2 border-ink/15 bg-card text-ink hover:border-ink/40; }
+@utility card { @apply rounded-3xl border border-line bg-card p-5 shadow-[0_2px_0_0_var(--color-line)]; }
+@utility field { @apply min-h-12 w-full rounded-xl border-2 border-line bg-white px-4 py-3 text-base text-ink placeholder:text-ink-soft/60; }
+@utility eyebrow { @apply text-xs font-bold uppercase tracking-[0.14em] text-forest; }
+@utility h-display { font-family: var(--font-display); @apply font-bold tracking-tight; }
+
+/* A woven band built from plain gradients — original, no imagery borrowed. */
+.weave {
+  height: 10px;
+  background:
+    repeating-linear-gradient(90deg, var(--color-clay) 0 18px, var(--color-gold) 18px 30px, var(--color-forest) 30px 48px, var(--color-night) 48px 56px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise 0.4s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .rise { animation: none; }
+  .btn { transition: none; }
 }

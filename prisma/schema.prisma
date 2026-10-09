@@ -1,0 +1,211 @@
+// Campus Life Africa — Phase 1 schema.
+// Later-phase tables (NPCs, story history, businesses, leaderboards…) are
+// specified in docs/SCHEMA.md and are added by migration in their own phase.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions   Session[]
+  characters Character[]
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  /// SHA-256 of the cookie token. The raw token is never stored.
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model University {
+  id       String @id
+  name     String
+  shortName String
+  country  String
+
+  programs AcademicProgram[]
+}
+
+model AcademicProgram {
+  id           String @id
+  universityId String
+  name         String
+  faculty      String
+
+  university University      @relation(fields: [universityId], references: [id])
+  courses    ProgramCourse[]
+  characters Character[]
+}
+
+model Course {
+  id         String @id
+  code       String @unique
+  title      String
+  credits    Int
+  difficulty Int
+
+  programs      ProgramCourse[]
+  prerequisites CoursePrerequisite[] @relation("course")
+  requiredBy    CoursePrerequisite[] @relation("prerequisite")
+  enrollments   Enrollment[]
+}
+
+model ProgramCourse {
+  programId String
+  courseId  String
+  year      Int
+  semester  Int
+
+  program AcademicProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  course  Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([programId, courseId])
+  @@index([programId, year, semester])
+}
+
+model CoursePrerequisite {
+  courseId       String
+  prerequisiteId String
+
+  course       Course @relation("course", fields: [courseId], references: [id], onDelete: Cascade)
+  prerequisite Course @relation("prerequisite", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, prerequisiteId])
+}
+
+model Character {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  displayName  String
+  hometown     String
+  programId    String
+  backgroundId String
+  ambitionId   String
+  traits       String[]
+  createdAt    DateTime @default(now())
+
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program     AcademicProgram      @relation(fields: [programId], references: [id])
+  appearance  CharacterAppearance?
+  save        GameSave?
+  stats       PlayerStatistics?
+  wallet      Wallet?
+  enrollments Enrollment[]
+  actionLogs  GameActionLog[]
+
+  @@index([userId])
+}
+
+model CharacterAppearance {
+  characterId String @id @db.Uuid
+  skinTone    String
+  hairstyle   String
+  hairColor   String
+  outfit      String
+  outfitColor String
+  accessory   String
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+}
+
+/// The authoritative engine snapshot. `version` is the optimistic-concurrency
+/// token: every write is conditional on the version the writer read.
+model GameSave {
+  characterId   String   @id @db.Uuid
+  schemaVersion Int
+  version       Int      @default(1)
+  state         Json
+  updatedAt     DateTime @updatedAt
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+}
+
+/// Queryable projection of the snapshot's stats, written in the same transaction.
+model PlayerStatistics {
+  characterId         String @id @db.Uuid
+  academicPreparation Int
+  energy              Int
+  wellbeing           Int
+  socialConnection    Int
+  campusReputation    Int
+  careerReadiness     Int
+  leadership          Int
+  businessExperience  Int
+  cgpaX100            Int?
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  characterId    String @id @db.Uuid
+  /// Integer pesewas. Kept non-negative by a CHECK constraint.
+  balancePesewas Int
+
+  character    Character              @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  transactions FinancialTransaction[]
+}
+
+model FinancialTransaction {
+  id                  String   @id @default(uuid()) @db.Uuid
+  walletId            String   @db.Uuid
+  amountPesewas       Int
+  balanceAfterPesewas Int
+  reason              String
+  actionLogId         String?  @db.Uuid
+  createdAt           DateTime @default(now())
+
+  wallet    Wallet         @relation(fields: [walletId], references: [characterId], onDelete: Cascade)
+  actionLog GameActionLog? @relation(fields: [actionLogId], references: [id])
+
+  @@index([walletId, createdAt])
+}
+
+model Enrollment {
+  id          String @id @default(uuid()) @db.Uuid
+  characterId String @db.Uuid
+  courseId    String
+  term        String
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  course    Course    @relation(fields: [courseId], references: [id])
+
+  @@unique([characterId, courseId, term])
+}
+
+/// Append-only audit trail. The unique key makes every action idempotent:
+/// a retried request finds its earlier row instead of applying twice.
+model GameActionLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  characterId    String   @db.Uuid
+  idempotencyKey String
+  type           String
+  fromVersion    Int
+  toVersion      Int
+  summary        String
+  createdAt      DateTime @default(now())
+
+  character    Character              @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  transactions FinancialTransaction[]
+
+  @@unique([characterId, idempotencyKey])
+  @@index([characterId, createdAt])
+}

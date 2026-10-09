@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Campus Life Africa
 
-## Getting Started
+*Four Years. Thousands of Choices. One Campus Story.*
 
-First, run the development server:
+A university life simulator set at the fictional Akwaaba Metropolitan University (AMU), Ghana.
+
+**Status: Phase 1 of 7.** You can register, build a student, receive an admission letter, accept it and land on a dashboard with saved stats, wallet and courses. The weekly planner and story events are the next milestone. See [docs/MILESTONES.md](docs/MILESTONES.md).
+
+## Run locally
+
+Requires Node 22 and PostgreSQL 16.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env          # set DATABASE_URL
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev                   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Checks
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run check                 # lint + typecheck + unit and integration tests
+npm run test:e2e              # Playwright; builds and starts the app itself
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Integration tests read `DATABASE_URL` from `.env.test`, refuse to run unless the database name contains `campus_test`, and delete all users between tests.
 
-## Learn More
+## Docs
 
-To learn more about Next.js, take a look at the following resources:
+- [Architecture, structure, dependencies](docs/ARCHITECTURE.md)
+- [Database schema](docs/SCHEMA.md)
+- [Vertical-slice plan](docs/VERTICAL_SLICE.md)
+- [Milestones and acceptance status](docs/MILESTONES.md)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All art is original SVG placeholder work in `src/components/Avatar.tsx`, keyed by appearance id so it can be replaced layer by layer.
